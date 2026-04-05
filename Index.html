@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap');
+    body { font-family: 'Sarabun', sans-serif; background-color: #f8fafc; }
+    .step-bar { display: flex; background: white; border-radius: 50px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+    .step { position: relative; flex: 1; padding: 12px; color: #94a3b8; font-size: 14px; cursor: pointer; transition: 0.3s; text-align: center; }
+    .step.active { background: #1e40af; color: white; }
+    .card { @apply bg-white rounded-2xl shadow-sm border border-gray-100 p-6; }
+    .animate-fade-in { animation: fadeIn 0.5s ease-in-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+<body>
+
+  <div id="login-page" class="min-h-screen flex items-center justify-center p-4">
+    <div class="max-w-md w-full bg-white rounded-3xl shadow-2xl p-10">
+      <div class="text-center mb-8">
+        <div class="bg-blue-600 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <i class="fas fa-atom text-white text-3xl"></i>
+        </div>
+        <h1 class="text-2xl font-bold text-gray-800">EduTrack QR</h1>
+      </div>
+      <div class="space-y-4">
+        <input type="text" id="user" placeholder="ชื่อผู้ใช้งาน" class="w-full p-4 bg-gray-50 border rounded-xl outline-none">
+        <input type="password" id="pass" placeholder="รหัสผ่าน" class="w-full p-4 bg-gray-50 border rounded-xl outline-none">
+        <button onclick="login()" class="w-full bg-blue-600 text-white p-4 rounded-xl font-bold hover:bg-blue-700 transition shadow-lg">เข้าสู่ระบบ</button>
+      </div>
+      <div id="login-msg" class="text-red-500 text-center mt-4 text-sm"></div>
+    </div>
+  </div>
+
+  <div id="main-page" class="hidden">
+    <header class="bg-[#1e40af] text-white p-4 flex justify-between items-center px-8 shadow-lg">
+      <h1 class="text-lg font-semibold">EduTrack QR</h1>
+      <div class="flex items-center gap-4">
+        <span id="user-display" class="text-sm"></span>
+        <button onclick="location.reload()" class="bg-red-500 hover:bg-red-600 px-3 py-1 rounded text-xs transition">Logout</button>
+      </div>
+    </header>
+
+    <div class="max-w-6xl mx-auto p-6">
+      <div id="teacher-menu" class="step-bar mb-8 hidden">
+        <div class="step active" onclick="showTab('tab-1', this)"><i class="fas fa-users-rectangle mr-2"></i>จัดการนักเรียน</div>
+        <div class="step" onclick="showTab('tab-2', this)"><i class="fas fa-qrcode mr-2"></i>สร้าง QR</div>
+        <div class="step" onclick="showTab('tab-4', this)"><i class="fas fa-chart-pie mr-2"></i>สรุปผล</div>
+        <div class="step" onclick="showTab('tab-5', this)"><i class="fas fa-user-cog mr-2"></i>ตั้งค่าครู</div>
+        <div class="step" onclick="showTab('tab-stu-1', this)"><i class="fas fa-camera mr-2"></i>สแกนเช็คชื่อ</div>
+      </div>
+
+      <div id="student-menu" class="step-bar mb-8 hidden">
+        <div class="step active" onclick="showTab('tab-stu-1', this)"><i class="fas fa-camera mr-2"></i>สแกนเข้าเรียน</div>
+      </div>
+
+      <div id="tab-stu-1" class="tab-content hidden">
+        <div class="card max-w-md mx-auto text-center border-2 border-blue-100">
+          <h2 class="text-xl font-bold text-blue-900 mb-4">สแกน QR เข้าเรียน</h2>
+          <div id="reader" class="w-full rounded-xl overflow-hidden bg-black min-h-[250px]"></div>
+          <div id="scan-result" class="mt-4 p-3 rounded-lg font-bold text-blue-600 min-h-[50px]"></div>
+          
+          <div id="status-buttons" class="grid grid-cols-2 gap-2 mt-4 hidden">
+            <button onclick="submitStatus('มา')" class="bg-green-500 text-white p-3 rounded-xl font-bold shadow hover:bg-green-600">มา</button>
+            <button onclick="submitStatus('สาย')" class="bg-yellow-500 text-white p-3 rounded-xl font-bold shadow hover:bg-yellow-600">สาย</button>
+            <button onclick="submitStatus('ขาด')" class="bg-red-500 text-white p-3 rounded-xl font-bold shadow hover:bg-red-600">ขาด</button>
+            <button onclick="submitStatus('ลา')" class="bg-blue-500 text-white p-3 rounded-xl font-bold shadow hover:bg-blue-600">ลา</button>
+          </div>
+          <button id="btn-rescan" onclick="startScanner()" class="mt-4 text-sm text-gray-500 hidden underline">สแกนใหม่</button>
+        </div>
+      </div>
+
+      <div id="tab-1" class="tab-content">
+        <div class="flex justify-between items-center mb-4 px-2">
+          <h2 class="text-lg font-bold text-gray-700">เลือกห้องเรียน</h2>
+          <button onclick="openRoomModal('add')" class="text-blue-600 hover:text-blue-800 text-sm font-semibold"><i class="fas fa-plus-circle"></i> เพิ่มห้อง</button>
+        </div>
+        <div id="room-buttons-container" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 mb-8"></div>
+        
+        <div id="student-management-section" class="hidden animate-fade-in">
+          <div class="flex justify-between items-end mb-4 px-2">
+            <h2 class="text-xl font-bold text-blue-900">ห้อง: <span id="selected-room-display"></span></h2>
+            <button onclick="openStudentModal()" class="bg-emerald-500 text-white px-4 py-2 rounded-lg text-sm font-bold shadow hover:bg-emerald-600 transition">เพิ่มนักเรียน</button>
+          </div>
+          <div class="card p-0 overflow-hidden shadow-lg border-none">
+            <table class="w-full text-left">
+              <thead class="bg-slate-800 text-white text-xs uppercase">
+                <tr><th class="p-3">รหัส</th><th class="p-3">ชื่อ-นามสกุล</th><th class="p-3">Username</th><th class="p-3 text-center">จัดการ</th></tr>
+              </thead>
+              <tbody id="student-table-body" class="text-sm"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="tab-2" class="tab-content hidden">
+        <div class="card max-w-4xl mx-auto text-center">
+          <h2 class="font-bold mb-4 text-xl text-blue-900">QR Code นักเรียน</h2>
+          <button onclick="loadAllStudentQR()" class="bg-blue-600 text-white px-6 py-2 rounded-lg mb-6 shadow hover:bg-blue-700">แสดง QR ทั้งหมด</button>
+          <div id="qr-container" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div>
+        </div>
+      </div>
+      <div id="tab-4" class="tab-content hidden"><div class="card"><div id="pie_chart" class="h-96"></div></div></div>
+      <div id="tab-5" class="tab-content hidden max-w-md mx-auto">
+        <div class="card space-y-4">
+          <h2 class="font-bold border-b pb-2">เปลี่ยนรหัสผ่านครู</h2>
+          <input type="password" id="new-pass" placeholder="รหัสผ่านใหม่" class="w-full border p-3 rounded-xl outline-none">
+          <button onclick="saveNewPass()" class="w-full bg-blue-900 text-white p-3 rounded-xl hover:bg-blue-800 transition shadow-lg">บันทึก</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="room-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl w-full max-w-md p-8 shadow-2xl">
+      <h3 id="room-modal-title" class="text-xl font-bold mb-6 text-blue-900">จัดการห้องเรียน</h3>
+      <input type="hidden" id="edit-room-id">
+      <input type="text" id="room-name-input" class="w-full p-3 border rounded-xl mb-4" placeholder="ชื่อห้องเรียน (เช่น ปวช.1/1)">
+      <select id="room-color-input" class="w-full p-3 border rounded-xl mb-6">
+        <option value="from-blue-500 to-blue-700">สีน้ำเงิน</option>
+        <option value="from-emerald-500 to-emerald-700">สีเขียว</option>
+        <option value="from-orange-500 to-orange-700">สีส้ม</option>
+        <option value="from-rose-500 to-rose-700">สีแดง</option>
+      </select>
+      <div class="flex gap-3">
+        <button onclick="closeRoomModal()" class="flex-1 bg-gray-100 py-3 rounded-xl">ยกเลิก</button>
+        <button onclick="saveRoom()" class="flex-1 bg-blue-600 text-white py-3 rounded-xl">บันทึก</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="student-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-[60] p-4">
+    <div class="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl">
+      <h3 id="stu-modal-title" class="text-lg font-bold mb-4">ลงทะเบียนนักเรียน</h3>
+      <div class="space-y-3">
+        <input type="text" id="modal-stu-id" placeholder="รหัสนักเรียน (เช่น 65001)" class="w-full p-3 border rounded-lg">
+        <input type="text" id="modal-stu-name" placeholder="ชื่อ-นามสกุล (ห้ามมีตัวเลข)" class="w-full p-3 border rounded-lg">
+        <input type="password" id="modal-stu-pass" placeholder="รหัสผ่านใหม่ (เฉพาะตอนแก้ไข)" class="hidden w-full p-3 border rounded-lg">
+      </div>
+      <div class="flex gap-2 mt-6">
+        <button onclick="closeStudentModal()" class="flex-1 bg-gray-100 py-2 rounded-lg">ยกเลิก</button>
+        <button id="btn-save-student" onclick="saveNewStudent()" class="flex-1 bg-blue-600 py-2 rounded-lg text-white">บันทึก</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentUser = null;
+    let currentSelectedRoom = "";
+    let html5QrCode = null;
+    let scannedStudent = null;
+
+    // ตรวจสอบชื่อ: อนุญาตแค่ ก-ฮ, a-z, A-Z และช่องว่างเท่านั้น
+    const namePattern = /^[a-zA-Z\u0E00-\u0E7F\s]+$/;
+
+    function login() {
+      const u = document.getElementById('user').value;
+      const p = document.getElementById('pass').value;
+      if(!u || !p) return Swal.fire('เตือน','ระบุชื่อและรหัส','warning');
+      google.script.run.withSuccessHandler(res => {
+        if(res.status === 'success') {
+          currentUser = res;
+          document.getElementById('login-page').classList.add('hidden');
+          document.getElementById('main-page').classList.remove('hidden');
+          document.getElementById('user-display').innerHTML = `สวัสดี, <b>${res.name}</b>`;
+          if(res.role === 'teacher') {
+            document.getElementById('teacher-menu').classList.remove('hidden');
+            loadRooms();
+          } else {
+            document.getElementById('student-menu').classList.remove('hidden');
+            showTab('tab-stu-1', document.querySelector('#student-menu .step'));
+          }
+        } else { document.getElementById('login-msg').innerText = res.message; }
+      }).checkLogin(u, p);
+    }
+
+    function showTab(id, el) {
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
+      stopScanner().then(() => {
+        const targetTab = document.getElementById(id);
+        if (targetTab) targetTab.classList.remove('hidden');
+        document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+        if (el) el.classList.add('active');
+
+        if (id === 'tab-stu-1') {
+          setTimeout(startScanner, 300);
+        }
+        if(id === 'tab-4') drawChart();
+      });
+    }
+
+    // --- Scanner Logic ---
+    function handleQRScanned(decodedText, decodedResult) {
+      stopScanner().then(() => {
+        document.getElementById('scan-result').innerHTML = "<span class='text-orange-500'>กำลังโหลดรายละเอียด...</span>";
+        google.script.run.withSuccessHandler(res => {
+          if(res.status === 'success') {
+            scannedStudent = res;
+            document.getElementById('scan-result').innerHTML = `
+              <div class="animate-fade-in text-left bg-blue-50 p-4 rounded-xl border border-blue-100">
+                <p class="text-gray-500 text-xs">พบข้อมูลนักเรียน</p>
+                <p class="text-lg">👤 <b>${res.name}</b></p>
+                <p class="text-sm">🆔 รหัส: ${res.studentId} | 🏠 ห้อง: ${res.class}</p>
+              </div>`;
+            document.getElementById('status-buttons').classList.remove('hidden');
+            document.getElementById('btn-rescan').classList.remove('hidden');
+          } else {
+            Swal.fire('ไม่พบข้อมูล', res.message, 'error').then(startScanner);
+          }
+        }).checkInByQR(decodedText);
+      });
+    }
+
+async function startScanner() {
+  const readerElement = document.getElementById("reader");
+  if (!readerElement) return;
+
+  if (!html5QrCode) {
+    html5QrCode = new Html5Qrcode("reader");
+  }
+
+  // ล้างค่าสถานะก่อนเริ่ม
+  scannedStudent = null;
+  document.getElementById('status-buttons').classList.add('hidden');
+  document.getElementById('scan-result').innerHTML = "<span class='text-blue-500'>กำลังเปิดกล้อง...</span>";
+
+  try {
+    await html5QrCode.start(
+      { facingMode: "environment" }, 
+      { fps: 10, qrbox: { width: 250, height: 250 } }, 
+      handleQRScanned // *** ต้องเป็น QR ตัวใหญ่ให้ตรงกับชื่อฟังก์ชันด้านบน ***
+    );
+    document.getElementById('scan-result').innerText = "วาง QR Code ให้ตรงกรอบ";
+  } catch (err) {
+    console.error("Camera Error:", err);
+    document.getElementById('scan-result').innerHTML = `<span class='text-red-500'>ไม่สามารถเปิดกล้องได้</span>`;
+    Swal.fire('กล้องมีปัญหา', 'กรุณาอนุญาตให้เข้าถึงกล้อง หรือเช็คว่าใช้ HTTPS หรือไม่', 'error');
+  }
+}
+
+    async function stopScanner() {
+      if (html5QrCode && html5QrCode.isScanning) {
+        await html5QrCode.stop();
+      }
+    }
+
+    function submitStatus(status) {
+      if (!scannedStudent) return;
+      Swal.fire({ title: 'บันทึกสถานะ...', didOpen: () => Swal.showLoading() });
+      google.script.run.withSuccessHandler(msg => {
+        Swal.fire('บันทึกสำเร็จ', msg, 'success').then(startScanner);
+      }).saveAttendance({
+        studentId: scannedStudent.studentId,
+        name: scannedStudent.name,
+        class: scannedStudent.class,
+        status: status
+      });
+    }
+
+    // --- Rooms & Students Management ---
+    function loadRooms() {
+      google.script.run.withSuccessHandler(rooms => {
+        let html = '';
+        rooms.forEach(room => {
+          html += `<div class="relative group">
+            <button onclick="selectRoom('${room.name}')" class="w-full rounded-xl py-4 text-white font-bold bg-gradient-to-br ${room.color} shadow-md hover:scale-105 transition">${room.name}</button>
+            <div class="absolute top-1 right-1 hidden group-hover:flex gap-1">
+              <button onclick="event.stopPropagation(); openRoomModal('edit', '${room.id}', '${room.name}', '${room.color}')" class="bg-white/20 p-1 rounded text-[10px] text-white"><i class="fas fa-edit"></i></button>
+              <button onclick="event.stopPropagation(); deleteRoom('${room.id}')" class="bg-red-500/80 p-1 rounded text-[10px] text-white"><i class="fas fa-trash"></i></button>
+            </div>
+          </div>`;
+        });
+        document.getElementById('room-buttons-container').innerHTML = html;
+      }).getRoomsData();
+    }
+
+    function selectRoom(name) {
+      currentSelectedRoom = name;
+      document.getElementById('student-management-section').classList.remove('hidden');
+      document.getElementById('selected-room-display').innerText = name;
+      loadStudents(name);
+    }
+
+    function loadStudents(name) {
+      const tbody = document.getElementById('student-table-body');
+      tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center">กำลังโหลด...</td></tr>';
+      google.script.run.withSuccessHandler(students => {
+        let html = '';
+        students.forEach(s => {
+          html += `<tr class="border-b hover:bg-gray-50 transition">
+            <td class="p-3 font-bold text-blue-600">${s.id}</td>
+            <td class="p-3">${s.name}</td>
+            <td class="p-3 text-gray-400 text-xs">${s.username}</td>
+            <td class="p-3 text-center">
+              <button onclick="editStudent('${s.id}', '${s.name}')" class="text-blue-500 mr-3"><i class="fas fa-edit"></i></button>
+              <button onclick="deleteStudent('${s.id}')" class="text-red-400"><i class="fas fa-trash-alt"></i></button>
+            </td>
+          </tr>`;
+        });
+        tbody.innerHTML = html || '<tr><td colspan="4" class="p-10 text-center text-gray-400">ยังไม่มีรายชื่อ</td></tr>';
+      }).getStudentsByRoom(name);
+    }
+
+    function saveRoom() {
+      const id = document.getElementById('edit-room-id').value;
+      const name = document.getElementById('room-name-input').value.trim();
+      const color = document.getElementById('room-color-input').value;
+      if(!name) return Swal.fire('เตือน','กรุณาระบุชื่อห้อง','warning');
+      
+      Swal.fire({ title: 'กำลังบันทึก...', didOpen: () => Swal.showLoading() });
+      google.script.run.withSuccessHandler(msg => {
+        if(msg.startsWith("Error")) {
+          Swal.fire('ข้อมูลซ้ำ', msg.replace("Error: ", ""), 'error');
+        } else {
+          Swal.fire('สำเร็จ', msg, 'success');
+          closeRoomModal(); loadRooms();
+        }
+      }).manageRoom(id ? 'update' : 'add', { id, name, color });
+    }
+
+    function saveNewStudent() {
+      const id = document.getElementById('modal-stu-id').value.trim();
+      const name = document.getElementById('modal-stu-name').value.trim();
+      
+      if(!id || !name) return Swal.fire('เตือน','กรอกข้อมูลให้ครบ','warning');
+      if(!namePattern.test(name)) return Swal.fire('ชื่อไม่ถูกต้อง','กรุณาใช้เฉพาะตัวอักษร ห้ามใช้ตัวเลขหรือสัญลักษณ์','error');
+
+      Swal.fire({ title: 'กำลังบันทึก...', didOpen: () => Swal.showLoading() });
+      google.script.run.withSuccessHandler(msg => {
+        if(msg.startsWith("Error")) {
+          Swal.fire('รหัสซ้ำ', msg.replace("Error: ", ""), 'error');
+        } else {
+          Swal.fire('สำเร็จ', msg, 'success');
+          closeStudentModal(); loadStudents(currentSelectedRoom);
+        }
+      }).manageStudent('add', { id, name, class: currentSelectedRoom, username: id, password: '123' });
+    }
+
+    // --- Other Helpers ---
+    function deleteRoom(id) {
+      Swal.fire({ title: 'ยืนยันการลบ?', text: "ข้อมูลห้องเรียนจะหายไป", icon: 'warning', showCancelButton: true }).then(res => {
+        if(res.isConfirmed) google.script.run.withSuccessHandler(m => { Swal.fire('ลบแล้ว',m,'success'); loadRooms(); }).manageRoom('delete', {id});
+      });
+    }
+
+    function deleteStudent(id) {
+      Swal.fire({ title: 'ลบนักเรียน?', icon: 'warning', showCancelButton: true }).then(res => {
+        if(res.isConfirmed) google.script.run.withSuccessHandler(m => { Swal.fire('สำเร็จ',m,'success'); loadStudents(currentSelectedRoom); }).manageStudent('delete', {id});
+      });
+    }
+
+    function editStudent(id, name) {
+      document.getElementById('stu-modal-title').innerText = "แก้ไขนักเรียน";
+      document.getElementById('modal-stu-id').value = id;
+      document.getElementById('modal-stu-id').disabled = true;
+      document.getElementById('modal-stu-name').value = name;
+      document.getElementById('modal-stu-pass').classList.remove('hidden');
+      document.getElementById('btn-save-student').setAttribute('onclick', 'saveEditStudent()');
+      openStudentModal();
+    }
+
+    function saveEditStudent() {
+      const id = document.getElementById('modal-stu-id').value;
+      const name = document.getElementById('modal-stu-name').value.trim();
+      const pass = document.getElementById('modal-stu-pass').value;
+      if(!namePattern.test(name)) return Swal.fire('ชื่อไม่ถูกต้อง','ห้ามใช้ตัวเลขหรือสัญลักษณ์','error');
+      google.script.run.withSuccessHandler(m => { Swal.fire('สำเร็จ',m,'success'); closeStudentModal(); loadStudents(currentSelectedRoom); }).updateStudent({id, name, password: pass});
+    }
+
+    function openRoomModal(mode, id='', name='', color='') {
+      document.getElementById('room-modal').classList.remove('hidden');
+      document.getElementById('edit-room-id').value = id;
+      document.getElementById('room-name-input').value = name;
+      document.getElementById('room-color-input').value = color || 'from-blue-500 to-blue-700';
+      document.getElementById('room-modal-title').innerText = id ? "แก้ไขห้องเรียน" : "เพิ่มห้องเรียน";
+    }
+    function closeRoomModal() { document.getElementById('room-modal').classList.add('hidden'); }
+    function openStudentModal() { document.getElementById('student-modal').classList.remove('hidden'); }
+    function closeStudentModal() { 
+      document.getElementById('student-modal').classList.add('hidden'); 
+      document.getElementById('modal-stu-id').disabled = false;
+      document.getElementById('modal-stu-id').value = '';
+      document.getElementById('modal-stu-name').value = '';
+      document.getElementById('modal-stu-pass').classList.add('hidden');
+      document.getElementById('btn-save-student').setAttribute('onclick', 'saveNewStudent()');
+      document.getElementById('stu-modal-title').innerText = "ลงทะเบียนนักเรียน";
+    }
+
+    function loadAllStudentQR() {
+      const container = document.getElementById('qr-container');
+      container.innerHTML = "กำลังเตรียมข้อมูล...";
+      google.script.run.withSuccessHandler(students => {
+        container.innerHTML = "";
+        students.forEach(s => {
+          let div = document.createElement('div');
+          div.className = "card p-4 text-center border shadow-sm hover:shadow-md transition";
+          div.innerHTML = `<p class="text-xs font-bold mb-2 truncate">${s.name}</p><div id="q-${s.id}" class="flex justify-center"></div><p class="text-[10px] mt-2 text-gray-400 font-mono">${s.id}</p>`;
+          container.appendChild(div);
+          new QRCode(document.getElementById(`q-${s.id}`), { text: s.id, width: 100, height: 100 });
+        });
+      }).getStudentsByRoom(currentSelectedRoom);
+    }
+
+    google.charts.load('current', {'packages':['corechart']});
+    function drawChart() {
+      google.script.run.withSuccessHandler(data => {
+        const chartData = google.visualization.arrayToDataTable([
+          ['Status', 'Count'], ['มา', data.stats.มา], ['สาย', data.stats.สาย], ['ขาด', data.stats.ขาด], ['ลา', data.stats.ลา]
+        ]);
+        new google.visualization.PieChart(document.getElementById('pie_chart')).draw(chartData, {
+          pieHole: 0.5, colors: ['#22c55e', '#f59e0b', '#ef4444', '#3b82f6'], 
+          chartArea: {width: '90%', height: '80%'},
+          legend: {position: 'bottom'}
+        });
+      }).getDashboardData();
+    }
+
+    function saveNewPass() {
+      const np = document.getElementById('new-pass').value;
+      if(!np) return;
+      google.script.run.withSuccessHandler(m => { Swal.fire('สำเร็จ',m,'success'); document.getElementById('new-pass').value=''; }).updatePassword(currentUser.userId, np);
+    }
+  </script>
+</body>
+</html>
