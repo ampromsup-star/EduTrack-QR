@@ -10,42 +10,82 @@
 <style>
 body{
   font-family: 'Sarabun', sans-serif;
-  background: linear-gradient(135deg,#eef2ff,#ffffff);
 }
-.card{
-  @apply bg-white rounded-2xl p-6 text-center shadow-md hover:shadow-xl transition cursor-pointer;
+
+/* พื้นหลัง */
+.hero {
+  background: url('https://images.unsplash.com/photo-1523240795612-9a054b0db644') center/cover;
+}
+
+/* กล่องลอย */
+.floating-card{
+  backdrop-filter: blur(12px);
+  background: rgba(255,255,255,0.9);
 }
 </style>
 
 </head>
 
-<body class="flex items-center justify-center min-h-screen">
+<body class="h-screen flex flex-col">
 
-<div class="w-full max-w-md p-6">
+<!-- 🔶 HERO TOP -->
+<div class="hero h-[55%] relative">
 
-  <!-- HEADER -->
-  <h1 class="text-2xl font-bold text-gray-800 mb-1">
-    ยินดีต้อนรับ 👋
-  </h1>
-  <p class="text-gray-400 mb-6">กรุณาเลือกประเภทผู้ใช้งาน</p>
+  <!-- overlay มืด -->
+  <div class="absolute inset-0 bg-black/30"></div>
 
-  <!-- ROLE -->
-  <div class="grid grid-cols-2 gap-4">
+  <!-- Title -->
+  <div class="absolute bottom-6 left-6 text-white">
+    <h1 class="text-3xl font-bold">EduTrack QR</h1>
+    <p class="text-sm opacity-80">ระบบเช็คชื่ออัจฉริยะ</p>
+  </div>
 
-    <!-- STUDENT -->
-    <div class="card" onclick="openLogin('student')">
-      <div class="bg-green-100 w-16 h-16 mx-auto rounded-xl flex items-center justify-center mb-3 text-2xl">🎓</div>
-      <h2 class="font-bold">นักเรียน</h2>
-      <button class="mt-2 bg-green-500 text-white px-4 py-2 rounded-lg">เข้าสู่ระบบ</button>
-      <p class="text-xs text-gray-400 mt-2">เช็คชื่อ / ส่งงาน</p>
-    </div>
+</div>
 
-    <!-- TEACHER -->
-    <div class="card" onclick="openLogin('teacher')">
-      <div class="bg-blue-100 w-16 h-16 mx-auto rounded-xl flex items-center justify-center mb-3 text-2xl">👨‍🏫</div>
-      <h2 class="font-bold">ครู</h2>
-      <button class="mt-2 bg-blue-500 text-white px-4 py-2 rounded-lg">เข้าสู่ระบบ</button>
-      <p class="text-xs text-gray-400 mt-2">จัดการระบบ / รายงาน</p>
+<!-- 🔷 FLOATING CARD -->
+<div class="flex-1 -mt-10 px-4">
+
+  <div class="floating-card rounded-3xl p-6 shadow-2xl max-w-md mx-auto">
+
+    <h2 class="text-xl font-bold mb-1">ยินดีต้อนรับ 👋</h2>
+    <p class="text-gray-400 text-sm mb-5">กรุณาเลือกประเภทผู้ใช้งาน</p>
+
+    <div class="grid grid-cols-2 gap-4">
+
+      <!-- STUDENT -->
+      <div onclick="openLogin('student')" 
+           class="bg-white rounded-2xl p-4 text-center shadow hover:scale-105 transition cursor-pointer">
+
+        <div class="bg-green-100 w-14 h-14 mx-auto rounded-xl flex items-center justify-center text-2xl mb-2">
+          🎓
+        </div>
+
+        <h3 class="font-bold text-gray-700">นักเรียน</h3>
+
+        <button class="mt-2 bg-green-500 text-white px-3 py-1 rounded-lg text-sm">
+          เข้าระบบ
+        </button>
+
+        <p class="text-xs text-gray-400 mt-1">เช็คชื่อ / ส่งงาน</p>
+      </div>
+
+      <!-- TEACHER -->
+      <div onclick="openLogin('teacher')" 
+           class="bg-white rounded-2xl p-4 text-center shadow hover:scale-105 transition cursor-pointer">
+
+        <div class="bg-blue-100 w-14 h-14 mx-auto rounded-xl flex items-center justify-center text-2xl mb-2">
+          👨‍🏫
+        </div>
+
+        <h3 class="font-bold text-gray-700">ครู</h3>
+
+        <button class="mt-2 bg-blue-500 text-white px-3 py-1 rounded-lg text-sm">
+          เข้าระบบ
+        </button>
+
+        <p class="text-xs text-gray-400 mt-1">จัดการ / รายงาน</p>
+      </div>
+
     </div>
 
   </div>
@@ -53,9 +93,9 @@ body{
 </div>
 
 <script>
-const API = "https://script.google.com/macros/s/AKfycbxU8I2GPjhmkNesZwwZKSlLXlu2aKOb6mUpAjE_3WEtZekNTscUAV75OUR5lpSV4IKLVA/exec";
+const API = "YOUR_WEB_APP_URL";
 
-// เปิด Login
+// 🔐 LOGIN POPUP
 function openLogin(role){
   Swal.fire({
     title: role === 'student' ? 'เข้าสู่ระบบนักเรียน' : 'เข้าสู่ระบบครู',
@@ -86,7 +126,7 @@ function openLogin(role){
           window.location = "Student.html";
         }
       }else{
-        Swal.showValidationMessage('ข้อมูลไม่ถูกต้อง');
+        Swal.showValidationMessage('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
       }
     }
   });
