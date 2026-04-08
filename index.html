@@ -1,86 +1,88 @@
 <!DOCTYPE html>
-<html>
+<html lang="th">
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>EduTrack</title>
+
 <script src="https://cdn.tailwindcss.com"></script>
-<script src="https://unpkg.com/html5-qrcode"></script>
+
+<style>
+body{
+  font-family: 'Sarabun', sans-serif;
+  background: linear-gradient(135deg,#f0f4ff,#ffffff);
+}
+</style>
+
 </head>
-<!-- update -->
-<body class="p-4 bg-gray-100">
 
-<h1 class="text-xl font-bold mb-4">EduTrack QR</h1>
+<body class="flex items-center justify-center min-h-screen">
 
-<input id="user" placeholder="user" class="border p-2 w-full mb-2">
-<input id="pass" type="password" placeholder="pass" class="border p-2 w-full mb-2">
+<div class="w-full max-w-md p-6">
 
-<button onclick="login()" class="bg-blue-500 text-white p-2 w-full">Login</button>
+  <!-- HEADER -->
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-800">
+      ยินดีต้อนรับ 👋
+    </h1>
+    <p class="text-gray-400 text-sm">
+      กรุณาเลือกประเภทผู้ใช้งาน
+    </p>
+  </div>
 
-<div id="scan" class="hidden mt-4">
-  <div id="reader"></div>
-  <div id="result" class="mt-2"></div>
+  <!-- CARD SELECT -->
+  <div class="grid grid-cols-2 gap-4">
+
+    <!-- STUDENT -->
+    <div onclick="goStudent()" 
+         class="bg-white rounded-2xl p-5 text-center shadow hover:shadow-lg transition cursor-pointer border">
+
+      <div class="bg-green-100 w-16 h-16 mx-auto rounded-xl flex items-center justify-center mb-3">
+        🎓
+      </div>
+
+      <h2 class="font-bold text-gray-700 mb-2">นักเรียน</h2>
+
+      <button class="bg-green-500 text-white px-4 py-2 rounded-lg text-sm">
+        เข้าระบบ
+      </button>
+
+      <p class="text-xs text-gray-400 mt-2">
+        เช็คชื่อ / ส่งงาน
+      </p>
+    </div>
+
+    <!-- TEACHER -->
+    <div onclick="goTeacher()" 
+         class="bg-white rounded-2xl p-5 text-center shadow hover:shadow-lg transition cursor-pointer border">
+
+      <div class="bg-blue-100 w-16 h-16 mx-auto rounded-xl flex items-center justify-center mb-3">
+        👨‍🏫
+      </div>
+
+      <h2 class="font-bold text-gray-700 mb-2">ครู</h2>
+
+      <button class="bg-blue-500 text-white px-4 py-2 rounded-lg text-sm">
+        เข้าระบบ
+      </button>
+
+      <p class="text-xs text-gray-400 mt-2">
+        จัดการระบบ / รายงาน
+      </p>
+    </div>
+
+  </div>
+
 </div>
 
 <script>
-const API = 'https://script.google.com/macros/s/AKfycbypyeQ6-bGH4Clz6dXhfw4An_O7_oovQ2-Tz6oBCeszsj2rmcQUxUWg8h69voJAB8emBA/exec';
-
-async function api(action,data){
-  const res = await fetch(API,{
-    method:"POST",
-    body:JSON.stringify({action,data})
-  });
-  return await res.json();
+function goStudent(){
+  window.location.href = "Student.html";
 }
 
-let qr;
-
-async function login(){
-  const u = user.value;
-  const p = pass.value;
-
-  const res = await api("login",{u,p});
-
-  if(res.status==="ok"){
-    document.getElementById("scan").classList.remove("hidden");
-    startScan();
-  } else {
-    alert("login fail");
-  }
-}
-
-async function startScan(){
-  qr = new Html5Qrcode("reader");
-
-  const cams = await Html5Qrcode.getCameras();
-  const camId = cams[0].id;
-
-  qr.start(camId,{fps:10,qrbox:250},onScan);
-}
-
-async function onScan(text){
-  qr.pause();
-
-  const res = await api("scan",text);
-
-  if(res.status==="ok"){
-    document.getElementById("result").innerHTML =
-      res.name + "<br><button onclick='save(\"มา\")'>มา</button>";
-    window.current = res;
-  } else {
-    alert(res.message);
-    qr.resume();
-  }
-}
-
-async function save(status){
-  await api("save",{
-    id:current.id,
-    name:current.name,
-    class:current.class,
-    status
-  });
-
-  alert("saved");
-  qr.resume();
+function goTeacher(){
+  window.location.href = "Teacher.html";
 }
 </script>
 
