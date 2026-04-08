@@ -1,0 +1,34 @@
+body {
+  font-family: sans-serif;
+  background:#f1f5f9;
+  padding:20px;
+}
+
+.card {
+  background:white;
+  padding:20px;
+  border-radius:20px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.1);
+}
+
+.big {
+  max-width:400px;
+  margin:auto;
+  text-align:center;
+}
+
+.grid {
+  display:flex;
+  gap:10px;
+  margin-top:20px;
+}
+
+button {
+  flex:1;
+  padding:15px;
+  border:none;
+  border-radius:15px;
+  background:#2563eb;
+  color:white;
+  font-size:16px;
+}
