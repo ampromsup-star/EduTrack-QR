@@ -4,14 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>EduTrack</title>
-
 <script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <style>
 body{
   font-family: 'Sarabun', sans-serif;
-  background: linear-gradient(135deg,#f0f4ff,#ffffff);
+  background: linear-gradient(135deg,#eef2ff,#ffffff);
+}
+.card{
+  @apply bg-white rounded-2xl p-6 text-center shadow-md hover:shadow-xl transition cursor-pointer;
 }
 </style>
 
@@ -22,54 +24,28 @@ body{
 <div class="w-full max-w-md p-6">
 
   <!-- HEADER -->
-  <div class="mb-6">
-    <h1 class="text-2xl font-bold text-gray-800">
-      ยินดีต้อนรับ 👋
-    </h1>
-    <p class="text-gray-400 text-sm">
-      กรุณาเลือกประเภทผู้ใช้งาน
-    </p>
-  </div>
+  <h1 class="text-2xl font-bold text-gray-800 mb-1">
+    ยินดีต้อนรับ 👋
+  </h1>
+  <p class="text-gray-400 mb-6">กรุณาเลือกประเภทผู้ใช้งาน</p>
 
-  <!-- CARD SELECT -->
+  <!-- ROLE -->
   <div class="grid grid-cols-2 gap-4">
 
     <!-- STUDENT -->
-    <div onclick="goStudent()" 
-         class="bg-white rounded-2xl p-5 text-center shadow hover:shadow-lg transition cursor-pointer border">
-
-      <div class="bg-green-100 w-16 h-16 mx-auto rounded-xl flex items-center justify-center mb-3">
-        🎓
-      </div>
-
-      <h2 class="font-bold text-gray-700 mb-2">นักเรียน</h2>
-
-      <button class="bg-green-500 text-white px-4 py-2 rounded-lg text-sm">
-        เข้าระบบ
-      </button>
-
-      <p class="text-xs text-gray-400 mt-2">
-        เช็คชื่อ / ส่งงาน
-      </p>
+    <div class="card" onclick="openLogin('student')">
+      <div class="bg-green-100 w-16 h-16 mx-auto rounded-xl flex items-center justify-center mb-3 text-2xl">🎓</div>
+      <h2 class="font-bold">นักเรียน</h2>
+      <button class="mt-2 bg-green-500 text-white px-4 py-2 rounded-lg">เข้าสู่ระบบ</button>
+      <p class="text-xs text-gray-400 mt-2">เช็คชื่อ / ส่งงาน</p>
     </div>
 
     <!-- TEACHER -->
-    <div onclick="goTeacher()" 
-         class="bg-white rounded-2xl p-5 text-center shadow hover:shadow-lg transition cursor-pointer border">
-
-      <div class="bg-blue-100 w-16 h-16 mx-auto rounded-xl flex items-center justify-center mb-3">
-        👨‍🏫
-      </div>
-
-      <h2 class="font-bold text-gray-700 mb-2">ครู</h2>
-
-      <button class="bg-blue-500 text-white px-4 py-2 rounded-lg text-sm">
-        เข้าระบบ
-      </button>
-
-      <p class="text-xs text-gray-400 mt-2">
-        จัดการระบบ / รายงาน
-      </p>
+    <div class="card" onclick="openLogin('teacher')">
+      <div class="bg-blue-100 w-16 h-16 mx-auto rounded-xl flex items-center justify-center mb-3 text-2xl">👨‍🏫</div>
+      <h2 class="font-bold">ครู</h2>
+      <button class="mt-2 bg-blue-500 text-white px-4 py-2 rounded-lg">เข้าสู่ระบบ</button>
+      <p class="text-xs text-gray-400 mt-2">จัดการระบบ / รายงาน</p>
     </div>
 
   </div>
@@ -77,12 +53,43 @@ body{
 </div>
 
 <script>
-function goStudent(){
-  window.location.href = "Student.html";
-}
+const API = "https://script.google.com/macros/s/AKfycbxU8I2GPjhmkNesZwwZKSlLXlu2aKOb6mUpAjE_3WEtZekNTscUAV75OUR5lpSV4IKLVA/exec";
 
-function goTeacher(){
-  window.location.href = "Teacher.html";
+// เปิด Login
+function openLogin(role){
+  Swal.fire({
+    title: role === 'student' ? 'เข้าสู่ระบบนักเรียน' : 'เข้าสู่ระบบครู',
+    html: `
+      <input id="user" class="swal2-input" placeholder="Username">
+      <input id="pass" type="password" class="swal2-input" placeholder="Password">
+    `,
+    confirmButtonText:'เข้าสู่ระบบ',
+    preConfirm: async () => {
+      const username = document.getElementById('user').value;
+      const password = document.getElementById('pass').value;
+
+      const res = await fetch(API,{
+        method:'POST',
+        body: JSON.stringify({
+          action:'login',
+          data:{username,password}
+        })
+      });
+
+      const data = await res.json();
+
+      if(data.status==='success'){
+        if(data.role==='teacher'){
+          window.location = "Teacher.html";
+        }else{
+          localStorage.setItem('student', JSON.stringify(data));
+          window.location = "Student.html";
+        }
+      }else{
+        Swal.showValidationMessage('ข้อมูลไม่ถูกต้อง');
+      }
+    }
+  });
 }
 </script>
 
